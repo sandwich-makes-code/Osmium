@@ -1,0 +1,33 @@
+name: Automated macOS Builder
+on:
+  release:
+    types: [published] # This kicks off the cloud Mac automatically when you click publish online
+
+jobs:
+  compile-mac-app:
+    runs-on: macos-latest
+    steps:
+      - name: Fetch Osmium Code Base
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Qt Dependencies
+        run: |
+          pip install pyinstaller PyQt6 PyQt6-WebEngine
+
+      - name: Execute PyInstaller Mac Bundle
+        run: |
+          pyinstaller --noconfirm --windowed --name "Osmium" --add-data "osmium:osmium" Osmium.py
+          cd dist
+          zip -r Osmium_macOS.zip Osmium.app
+
+      - name: Attach To GitHub Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/Osmium_macOS.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
